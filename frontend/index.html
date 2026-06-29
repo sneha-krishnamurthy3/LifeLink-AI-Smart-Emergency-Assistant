@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="LifeLink AI - Your AI-Powered Emergency Companion. Get instant emergency assistance, find nearby hospitals, connect with blood donors." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <title>LifeLink AI - Emergency Response Platform</title>
+    <script>
+      window.addEventListener('error', function(event) {
+        var root = document.getElementById('root');
+        if (root) {
+          root.innerHTML = '<div style="padding: 20px; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; font-family: sans-serif; border-radius: 8px; margin: 20px; z-index: 9999; position: relative;">' +
+            '<h1 style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Runtime JavaScript Error</h1>' +
+            '<p style="font-size: 14px; margin-bottom: 12px;">' + event.message + '</p>' +
+            '<pre style="font-size: 12px; background: #fff; padding: 10px; border-radius: 4px; overflow: auto; max-height: 300px; white-space: pre-wrap; word-break: break-all;">' + (event.error ? event.error.stack : '') + '</pre>' +
+            '</div>';
+        }
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        var root = document.getElementById('root');
+        if (root) {
+          root.innerHTML = '<div style="padding: 20px; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; font-family: sans-serif; border-radius: 8px; margin: 20px; z-index: 9999; position: relative;">' +
+            '<h1 style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Unhandled Promise Rejection</h1>' +
+            '<p style="font-size: 14px;">' + event.reason + '</p>' +
+            '</div>';
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
