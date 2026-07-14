@@ -103,20 +103,20 @@ const Footer = () => {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="mailto:support@lifelinkai.com"
+                  href="mailto:snehakrishnamurthy25@gmail.com"
                   className="flex items-center gap-3 text-sm text-slate-400 hover:text-blue-400 transition-colors"
                 >
                   <Mail className="w-4 h-4 flex-shrink-0" />
-                  support@lifelinkai.com
+                  snehakrishnamurthy25@gmail.com
                 </a>
               </li>
               <li>
                 <a
-                  href="tel:+911234567890"
+                  href="tel:9036767664"
                   className="flex items-center gap-3 text-sm text-slate-400 hover:text-blue-400 transition-colors"
                 >
                   <Phone className="w-4 h-4 flex-shrink-0" />
-                  +91 123 456 7890
+                  +91 9036767664
                 </a>
               </li>
               <li>
@@ -147,7 +147,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-slate-500">
-              © 2024 LifeLink AI. All rights reserved.
+              © 2025 LifeLink AI. All rights reserved.
             </p>
             <p className="text-xs text-slate-500 flex items-center gap-1">
               Made with{' '}

@@ -81,6 +81,57 @@ export default function EmergencyAssistant() {
     scrollToBottom();
   }, [messages]);
 
+  // Client-side fallback for when the backend AI is unreachable
+  const generateOfflineFallback = (text) => {
+    const lower = text.toLowerCase();
+    let emergency_type = 'General Emergency';
+    let urgency_level = 'MEDIUM';
+    let first_aid = ['Stay calm and assess the situation.', 'Call 112 (Emergency) or 108 (Ambulance).', 'Keep the patient comfortable and monitor breathing.'];
+    let dos = ['Stay calm', 'Call for help immediately', 'Stay with the person'];
+    let donts = ["Don't panic", "Don't leave the person alone", "Don't give food or water"];
+    let hospital_advice = 'Please visit the nearest hospital for professional evaluation.';
+
+    if (lower.includes('heart') || lower.includes('chest pain') || lower.includes('cardiac')) {
+      emergency_type = 'Cardiac Emergency'; urgency_level = 'CRITICAL';
+      first_aid = ['Call 108 (Ambulance) IMMEDIATELY.', 'Have the person sit or lie down comfortably.', 'Loosen tight clothing around the chest.', 'Begin CPR if the person becomes unresponsive and stops breathing normally.'];
+      dos = ['Call 108 immediately', 'Keep the person calm and still', 'Administer aspirin (325mg) if available and not allergic'];
+      donts = ["Don't leave the person alone", "Don't give food or water", "Don't delay calling emergency services"];
+    } else if (lower.includes('stroke') || lower.includes('face drooping') || lower.includes('slurred speech')) {
+      emergency_type = 'Suspected Stroke'; urgency_level = 'CRITICAL';
+      first_aid = ['Call 108 immediately — every minute matters.', 'Use FAST: Face drooping, Arm weakness, Speech difficulty, Time to call.', 'Keep the person lying down with head slightly elevated.'];
+      dos = ['Note the time symptoms started', 'Keep them calm', 'Loosen tight clothing'];
+      donts = ["Don't give food or drink", "Don't let them sleep without monitoring", "Don't delay emergency call"];
+    } else if (lower.includes('burn') || lower.includes('scald')) {
+      emergency_type = 'Burn Injury'; urgency_level = 'HIGH';
+      first_aid = ['Cool the burn under cool (not cold) running water for 10-20 minutes.', 'Remove jewelry/clothing near the burn.', 'Cover loosely with a clean bandage.', 'For severe burns, call 108 immediately.'];
+      dos = ['Cool with running water', 'Cover the burn loosely', 'Seek medical help for severe burns'];
+      donts = ["Don't use ice", "Don't pop blisters", "Don't apply butter or toothpaste"];
+    } else if (lower.includes('bleed') || lower.includes('cut') || lower.includes('wound')) {
+      emergency_type = 'Bleeding / Wound'; urgency_level = 'HIGH';
+      first_aid = ['Apply firm pressure with a clean cloth.', 'Elevate the injured area above the heart if possible.', 'Keep pressure for at least 10 minutes without lifting.'];
+      dos = ['Apply direct pressure', 'Elevate the limb', 'Call 108 for severe bleeding'];
+      donts = ["Don't remove the cloth if soaked — add more", "Don't apply a tourniquet unless bleeding is life-threatening", "Don't remove embedded objects"];
+    } else if (lower.includes('fracture') || lower.includes('broken bone') || lower.includes('fall')) {
+      emergency_type = 'Suspected Fracture'; urgency_level = 'MEDIUM';
+      first_aid = ['Immobilize the injured area — do not try to realign the bone.', 'Apply ice wrapped in cloth for 20 minutes.', 'Seek medical care.'];
+      dos = ['Immobilize the area', 'Apply ice to reduce swelling', 'Visit a hospital for X-ray'];
+      donts = ["Don't try to straighten the limb", "Don't move the person if spinal injury is suspected"];
+    }
+
+    const activeLocation = `${area || 'your area'}, ${city || 'your city'}`;
+    return {
+      emergency_type,
+      urgency_level,
+      first_aid,
+      dos,
+      donts,
+      hospital_advice,
+      emergency_numbers: ['112 - National Emergency', '108 - Ambulance (Free)', '102 - Medical Helpline', '1800-180-1104 - Poison Control'],
+      disclaimer: 'This is AI-generated first aid guidance. Always consult a medical professional. Call emergency services immediately for life-threatening situations.',
+      action_plan: `# 🚨 Emergency Action Plan: ${emergency_type}\n\n## ⚡ Urgency Level: ${urgency_level}\n\n## 📍 Your Location\nCurrently detected near **${activeLocation}**. Please use the **Hospital Finder** tab to view nearest hospitals on your map.\n\n## 🩹 Immediate First Aid\n${first_aid.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\n## ✅ Do's\n${dos.map(d => `- ${d}`).join('\n')}\n\n## ❌ Don'ts\n${donts.map(d => `- ${d}`).join('\n')}\n\n## 🏥 Hospital Recommendation\n${hospital_advice}\n\n## 📞 Emergency Contacts\n- **112** – National Emergency\n- **108** – Free Ambulance Service\n- **102** – Medical Helpline\n\n---\n*⚠️ Note: The AI backend is currently offline. This is a pre-compiled emergency guidance card. For a real-time, location-specific action plan, please ensure the backend service is running.*\n\n> **Medical Disclaimer:** This AI provides guidance only. Always call emergency services for critical situations.`
+    };
+  };
+
   const handleSendMessage = async (text) => {
     if (!text.trim() || isLoading) return;
 
@@ -133,19 +184,17 @@ export default function EmergencyAssistant() {
         return [...filtered, aiMessage];
       });
     } catch (error) {
-      console.error('[EmergencyAssistant] Chat error:', error);
-      // Remove typing indicator and add error
+      console.warn('[EmergencyAssistant] Backend unreachable, using client-side fallback:', error.message);
+      // Generate a structured offline fallback instead of showing a raw error
+      const fallback = generateOfflineFallback(text.trim());
       setMessages((prev) => {
         const filtered = prev.filter((m) => m.id !== typingId);
-        return [
-          ...filtered,
-          {
-            id: Date.now(),
-            text: 'I apologize, but I encountered an error processing your request. Please try again or call emergency services directly at 112.',
-            isUser: false,
-            isError: true,
-          },
-        ];
+        return [...filtered, {
+          id: Date.now(),
+          text: fallback.action_plan,
+          isUser: false,
+          responseData: fallback,
+        }];
       });
     } finally {
       setIsLoading(false);
