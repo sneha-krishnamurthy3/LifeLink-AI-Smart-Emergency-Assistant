@@ -9,12 +9,14 @@ const BloodDonor = lazy(() => import('@/pages/BloodDonor'));
 const SOSPage = lazy(() => import('@/pages/SOSPage'));
 const VoiceAssistant = lazy(() => import('@/pages/VoiceAssistant'));
 const About = lazy(() => import('@/pages/About'));
+const AuthPage = lazy(() => import('@/pages/AuthPage'));
 
 function App() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<AuthPage />} />
         <Route path="/emergency" element={<EmergencyAssistant />} />
         <Route path="/hospitals" element={<HospitalFinder />} />
         <Route path="/donors" element={<BloodDonor />} />
