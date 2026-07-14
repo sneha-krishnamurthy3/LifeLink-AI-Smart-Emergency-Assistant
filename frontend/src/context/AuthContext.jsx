@@ -13,26 +13,34 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If Supabase Auth feature flag is disabled, just mock a logged-in state or bypass
+    // If Supabase Auth feature flag is disabled, treat everyone as anonymous
     if (!isFeatureEnabled('SUPABASE_AUTH')) {
-      setUser({ email: 'demo@lifelink.ai', id: '123' });
+      setUser(null);
       setLoading(false);
       return;
     }
 
     const initSession = async () => {
-      const { session } = await AuthService.getCurrentSession();
-      setSession(session);
-      setUser(session?.user || null);
-      setLoading(false);
+      try {
+        const { session } = await AuthService.getCurrentSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (err) {
+        // Supabase may be unconfigured — gracefully degrade to anonymous
+        console.warn('[AuthContext] Session init failed (Supabase may not be configured):', err.message);
+        setUser(null);
+        setSession(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     initSession();
 
-    // Listen for auth changes
-    const { data: { subscription } } = AuthRepository.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user || null);
+    // Listen for real-time auth state changes (token refresh, logout, login)
+    const { data: { subscription } } = AuthRepository.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
       setLoading(false);
     });
 
@@ -50,14 +58,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await AuthService.logout();
+    const result = await AuthService.logout();
     setUser(null);
     setSession(null);
+    return result;
   };
 
   const value = {
     user,
     session,
+    loading,            // true while Supabase is resolving the initial session
+    isAuthenticated: !!user,
     login,
     register,
     logout,
@@ -65,7 +76,13 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {/*
+        CRITICAL: Always render children immediately.
+        Never gate the app on auth loading state.
+        Anonymous users must see all pages without delay.
+        Components that need auth status can read `loading` from useAuth().
+      */}
+      {children}
     </AuthContext.Provider>
   );
 };
