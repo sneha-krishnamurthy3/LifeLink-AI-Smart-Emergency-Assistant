@@ -85,14 +85,22 @@ function UserMenu({ user, onLogout }) {
             <Link
               to="/my-health"
               onClick={() => setOpen(false)}
-              className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium border-b border-slate-100 dark:border-slate-800"
             >
               <Activity className="w-4 h-4 text-blue-400" />
               My Health Profile
             </Link>
+            <Link
+              to="/emergency-contacts"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+              Emergency Contacts
+            </Link>
             <button
               onClick={() => { setOpen(false); onLogout(); }}
-              className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors font-medium"
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors font-medium border-t border-slate-100 dark:border-slate-800"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -352,9 +360,17 @@ const Navbar = () => {
                         <Activity className="w-5 h-5 text-blue-400" />
                         My Health Profile
                       </Link>
+                      <Link
+                        to="/emergency-contacts"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                      >
+                        <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                        Emergency Contacts
+                      </Link>
                       <button
                         onClick={() => { setIsOpen(false); logout(); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all border-t border-slate-100 dark:border-slate-800 mt-1 pt-1"
                       >
                         <LogOut className="w-5 h-5" />
                         Sign Out

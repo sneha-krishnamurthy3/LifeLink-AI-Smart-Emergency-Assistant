@@ -18,6 +18,7 @@ const SignupPage = lazy(() => import('@/pages/AuthPage').then((m) => ({ default:
 
 // Authenticated pages
 const MyHealthPage = lazy(() => import('@/pages/MyHealthPage'));
+const EmergencyContactsPage = lazy(() => import('@/pages/EmergencyContactsPage'));
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
           element={
             <ProtectedRoute redirectTo="/login">
               <MyHealthPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/emergency-contacts"
+          element={
+            <ProtectedRoute redirectTo="/login">
+              <EmergencyContactsPage />
             </ProtectedRoute>
           }
         />

@@ -241,9 +241,9 @@ export default function SOSPage() {
                     {emergencyContacts.length === 0 ? (
                       <div className="col-span-full bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 p-8 rounded-3xl text-center shadow-sm">
                         <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                        <h4 className="font-bold text-amber-800 dark:text-amber-450">No Emergency Contacts Saved</h4>
+                        <h4 className="font-bold text-amber-800 dark:text-amber-450">No emergency contacts found</h4>
                         <p className="text-xs text-amber-700 dark:text-amber-500 mt-1 max-w-sm mx-auto">
-                          You currently have no emergency contacts saved. Please click "Add Contact" above to save contacts you can reach during an SOS broadcast.
+                          Please add emergency contacts.
                         </p>
                       </div>
                     ) : (
@@ -440,8 +440,9 @@ export default function SOSPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {emergencyContacts.length === 0 ? (
-                      <div className="col-span-full bg-red-950/40 p-4 rounded-xl border border-red-500/20 text-center">
-                        <p className="text-xs text-red-300">No emergency contacts configured. Please customize contacts in standard view to enable direct notifications.</p>
+                      <div className="col-span-full bg-red-950/40 p-6 rounded-2xl border border-red-500/20 text-center">
+                        <p className="text-sm font-semibold text-red-200">No emergency contacts found.</p>
+                        <p className="text-xs text-red-300 mt-1">Please add emergency contacts.</p>
                       </div>
                     ) : (
                       emergencyContacts.map((contact) => (
