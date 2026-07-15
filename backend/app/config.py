@@ -25,3 +25,9 @@ GOOGLE_MAPS_API_KEY: str = os.getenv("GOOGLE_MAPS_API_KEY", "your_google_maps_ap
 
 # --- CORS / Frontend ---
 FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+# --- Firebase Cloud Messaging (FCM) ---
+FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID", "")
+FIREBASE_CLIENT_EMAIL: str = os.getenv("FIREBASE_CLIENT_EMAIL", "")
+FIREBASE_PRIVATE_KEY: str = os.getenv("FIREBASE_PRIVATE_KEY", "").replace("\\n", "\n")
+FIREBASE_CREDENTIALS_PATH: str = os.getenv("FIREBASE_CREDENTIALS_PATH", "")

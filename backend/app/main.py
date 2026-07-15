@@ -7,7 +7,7 @@ Configures CORS, registers all routers, and exposes health-check endpoints.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import chat, donors, hospitals
+from app.routes import chat, donors, hospitals, notifications
 from app.config import FRONTEND_URL
 
 app = FastAPI(
@@ -36,6 +36,7 @@ app.add_middleware(
 app.include_router(chat.router)
 app.include_router(donors.router)
 app.include_router(hospitals.router)
+app.include_router(notifications.router)
 
 
 # ── Root & Health ──

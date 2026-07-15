@@ -22,9 +22,14 @@ export const AuthProvider = ({ children }) => {
 
     const initSession = async () => {
       try {
-        const { session } = await AuthService.getCurrentSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+        const { session: currentSession } = await AuthService.getCurrentSession();
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        if (currentSession?.user) {
+          import('../services/NotificationManager').then(({ default: nm }) => {
+            nm.initialize().catch(err => console.error('[AuthContext] FCM init error:', err));
+          });
+        }
       } catch (err) {
         // Supabase may be unconfigured — gracefully degrade to anonymous
         console.warn('[AuthContext] Session init failed (Supabase may not be configured):', err.message);
@@ -38,10 +43,21 @@ export const AuthProvider = ({ children }) => {
     initSession();
 
     // Listen for real-time auth state changes (token refresh, logout, login)
-    const { data: { subscription } } = AuthRepository.onAuthStateChange((_event, newSession) => {
+    const { data: { subscription } } = AuthRepository.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setLoading(false);
+
+      try {
+        const { default: nm } = await import('../services/NotificationManager');
+        if (newSession?.user) {
+          nm.initialize().catch(err => console.error('[AuthContext] FCM init error:', err));
+        } else {
+          nm.cleanup().catch(err => console.error('[AuthContext] FCM cleanup error:', err));
+        }
+      } catch (err) {
+        console.error('[AuthContext] Failed to load NotificationManager:', err);
+      }
     });
 
     return () => {
