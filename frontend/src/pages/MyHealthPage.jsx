@@ -253,9 +253,9 @@ export default function MyHealthPage() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [loadState, setLoadState] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [loadState, setLoadState] = useState('loading'); // 'loading' | 'ready' | 'blocked'
+  const [setupBanner, setSetupBanner] = useState(null);  // { errorCode, message } shown inline
   const [loadErrorCode, setLoadErrorCode] = useState(null);
-  const [loadErrorMessage, setLoadErrorMessage] = useState('');
   const [saveState, setSaveState] = useState('idle');    // 'idle' | 'saving' | 'saved' | 'error'
   const [saveMsg, setSaveMsg] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -266,21 +266,36 @@ export default function MyHealthPage() {
   // ── Load profile on mount ─────────────────────────────────────────────────
   const loadProfile = useCallback(async () => {
     setLoadState('loading');
+    setSetupBanner(null);
     setLoadErrorCode(null);
-    setLoadErrorMessage('');
     const { data, error, errorCode } = await getHealthProfile();
-    if (error) {
-      setLoadErrorCode(errorCode || 'UNKNOWN');
-      setLoadErrorMessage(error);
-      setLoadState('error');
+
+    // ── Cases that BLOCK the page entirely ──────────────────────────────
+    // Only block when Supabase is not initialised at all, or session is expired.
+    if (error && (errorCode === 'NOT_CONFIGURED' || errorCode === 'NOT_AUTHENTICATED')) {
+      setLoadErrorCode(errorCode);
+      setLoadState('blocked');
       return;
     }
+
+    // ── Cases that show a banner but still render the form ──────────────
+    // TABLE_NOT_FOUND, PERMISSION_DENIED, NETWORK_ERROR, UNKNOWN:
+    // Show the user the empty form with a setup/warning banner at the top.
+    if (error) {
+      setSetupBanner({ errorCode, message: error });
+      setHasProfile(false);
+      setIsEditing(true);   // open form so user can see it
+      setLoadState('ready');
+      return;
+    }
+
+    // ── Profile found ────────────────────────────────────────────────────
     if (data) {
       setForm(profileToForm(data));
       setHasProfile(true);
       setIsEditing(false);
     } else {
-      // No profile yet — show create form immediately, never show an error
+      // errorCode === 'NO_PROFILE': table exists, user has no row yet — normal first visit
       setHasProfile(false);
       setIsEditing(true);
     }
@@ -344,116 +359,38 @@ export default function MyHealthPage() {
     );
   }
 
-  if (loadState === 'error') {
-    // Build a specific, accurate message per error type
-    const errorDetails = {
-      NOT_CONFIGURED: {
-        icon: '🔧',
-        title: 'Supabase not configured',
-        body: 'Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your frontend .env file, then restart the dev server.',
-        showSql: false,
-        showLogin: false,
-      },
-      TABLE_NOT_FOUND: {
-        icon: '🗄️',
-        title: 'Database table missing',
-        body: 'The health_profiles table has not been created yet. Open your Supabase Dashboard → SQL Editor and run the schema below.',
-        showSql: true,
-        showLogin: false,
-      },
-      PERMISSION_DENIED: {
-        icon: '🔐',
-        title: 'Permission denied',
-        body: 'Row Level Security is blocking access. Please verify that the RLS policies were applied correctly in Supabase → Table Editor → health_profiles → Policies.',
-        showSql: false,
-        showLogin: false,
-      },
-      NOT_AUTHENTICATED: {
-        icon: '🔑',
-        title: 'Session expired',
-        body: 'Your session has expired. Please log out and log back in.',
-        showSql: false,
-        showLogin: true,
-      },
-      NETWORK_ERROR: {
-        icon: '📡',
-        title: 'Network error',
-        body: 'Could not reach Supabase. Please check your internet connection and try again.',
-        showSql: false,
-        showLogin: false,
-      },
-      UNKNOWN: {
-        icon: '⚠️',
-        title: 'Unexpected error',
-        body: loadErrorMessage || 'An unexpected error occurred while loading your health profile.',
-        showSql: false,
-        showLogin: false,
-      },
-    };
-
-    const detail = errorDetails[loadErrorCode] || errorDetails.UNKNOWN;
-
+  // ── Fully blocked states (cannot show form at all) ────────────────────────
+  if (loadState === 'blocked') {
+    const isNotConfigured = loadErrorCode === 'NOT_CONFIGURED';
     return (
       <Layout>
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-          <div className="text-center space-y-5 max-w-lg">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mx-auto text-3xl">
-              {detail.icon}
-            </div>
+          <div className="text-center space-y-5 max-w-sm">
+            <div className="text-4xl">{isNotConfigured ? '🔧' : '🔑'}</div>
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">{detail.title}</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">{detail.body}</p>
+              <h2 className="text-xl font-bold text-white mb-2">
+                {isNotConfigured ? 'Supabase not configured' : 'Session expired'}
+              </h2>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                {isNotConfigured
+                  ? 'Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your frontend .env file, then restart the dev server.'
+                  : 'Your session has expired. Please log out and sign back in.'}
+              </p>
             </div>
-
-            {detail.showSql && (
-              <div className="text-left bg-slate-900 border border-slate-700 rounded-xl p-4 text-xs text-slate-300 font-mono overflow-x-auto">
-                <p className="text-slate-500 mb-2 font-sans font-semibold text-xs uppercase tracking-wider">Run this in Supabase → SQL Editor:</p>
-                <pre className="whitespace-pre-wrap text-emerald-400 text-[11px] leading-relaxed">{`CREATE TABLE IF NOT EXISTS public.health_profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  full_name TEXT, date_of_birth DATE,
-  gender TEXT, height_cm NUMERIC(5,1), weight_kg NUMERIC(5,1),
-  blood_group TEXT,
-  allergies TEXT[], chronic_diseases TEXT[],
-  current_medications TEXT[], past_surgeries TEXT[],
-  disabilities TEXT[], organ_donor BOOLEAN DEFAULT false,
-  emergency_contact_name TEXT,
-  emergency_contact_relationship TEXT,
-  emergency_contact_phone TEXT,
-  CONSTRAINT health_profiles_user_id_unique UNIQUE (user_id)
-);
-ALTER TABLE public.health_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "own_select" ON public.health_profiles FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "own_insert" ON public.health_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "own_update" ON public.health_profiles FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "own_delete" ON public.health_profiles FOR DELETE USING (auth.uid() = user_id);`}</pre>
-              </div>
-            )}
-
-            <div className="flex items-center justify-center gap-3">
+            {isNotConfigured ? (
               <button
                 onClick={loadProfile}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 Try Again
               </button>
-              {detail.showLogin && (
-                <a
-                  href="/login"
-                  className="px-5 py-2.5 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white text-sm font-semibold rounded-xl transition-colors"
-                >
-                  Go to Login
-                </a>
-              )}
-            </div>
-
-            {loadErrorCode === 'UNKNOWN' && loadErrorMessage && (
-              <details className="text-left">
-                <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-400 transition-colors">Technical details</summary>
-                <code className="block mt-2 text-xs text-slate-500 bg-slate-900 rounded-lg p-3 break-all">{loadErrorMessage}</code>
-              </details>
+            ) : (
+              <a
+                href="/login"
+                className="inline-block px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Go to Login
+              </a>
             )}
           </div>
         </div>
@@ -524,6 +461,111 @@ CREATE POLICY "own_delete" ON public.health_profiles FOR DELETE USING (auth.uid(
               {completion < 100 ? `Add ${COMPLETION_FIELDS.filter((k) => !form[k]).length} more field${COMPLETION_FIELDS.filter((k) => !form[k]).length !== 1 ? 's' : ''} to complete your profile` : '🎉 Profile is complete!'}
             </p>
           </motion.div>
+
+          {/* ── Setup / Warning Banner (non-blocking errors) ─────────────── */}
+          <AnimatePresence>
+            {setupBanner && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 overflow-hidden"
+              >
+                <div className={`rounded-2xl border p-4 ${
+                  setupBanner.errorCode === 'TABLE_NOT_FOUND'
+                    ? 'bg-amber-500/10 border-amber-500/25'
+                    : 'bg-rose-500/10 border-rose-500/25'
+                }`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                      <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                        setupBanner.errorCode === 'TABLE_NOT_FOUND' ? 'text-amber-400' : 'text-rose-400'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold mb-1 ${
+                          setupBanner.errorCode === 'TABLE_NOT_FOUND' ? 'text-amber-300' : 'text-rose-300'
+                        }`}>
+                          {setupBanner.errorCode === 'TABLE_NOT_FOUND'
+                            ? 'Database setup required'
+                            : setupBanner.errorCode === 'PERMISSION_DENIED'
+                            ? 'Permission denied — RLS policy issue'
+                            : setupBanner.errorCode === 'NETWORK_ERROR'
+                            ? 'Network error — could not reach Supabase'
+                            : 'Could not load profile data'}
+                        </p>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {setupBanner.errorCode === 'TABLE_NOT_FOUND'
+                            ? 'Run the SQL below in Supabase Dashboard → SQL Editor to create the table, then refresh this page.'
+                            : setupBanner.message}
+                        </p>
+
+                        {/* Inline SQL for TABLE_NOT_FOUND */}
+                        {setupBanner.errorCode === 'TABLE_NOT_FOUND' && (
+                          <div className="mt-3 bg-slate-950/60 border border-slate-700 rounded-xl p-3 overflow-x-auto">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+                              Supabase SQL Editor → New Query → Paste → Run
+                            </p>
+                            <pre className="text-[11px] text-emerald-400 leading-relaxed whitespace-pre-wrap font-mono select-all">{`-- LifeLink AI: Health Profiles Table
+CREATE TABLE IF NOT EXISTS public.health_profiles (
+  id                              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at                      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  full_name                       TEXT,
+  date_of_birth                   DATE,
+  gender                          TEXT,
+  height_cm                       NUMERIC(5,1),
+  weight_kg                       NUMERIC(5,1),
+  blood_group                     TEXT,
+  allergies                       TEXT[],
+  chronic_diseases                TEXT[],
+  current_medications             TEXT[],
+  past_surgeries                  TEXT[],
+  disabilities                    TEXT[],
+  organ_donor                     BOOLEAN DEFAULT false,
+  emergency_contact_name          TEXT,
+  emergency_contact_relationship  TEXT,
+  emergency_contact_phone         TEXT,
+  CONSTRAINT health_profiles_user_id_unique UNIQUE (user_id)
+);
+
+-- Auto-update updated_at on every change
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS set_health_profiles_updated_at ON public.health_profiles;
+CREATE TRIGGER set_health_profiles_updated_at
+  BEFORE UPDATE ON public.health_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- Row Level Security
+ALTER TABLE public.health_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_select" ON public.health_profiles FOR SELECT  USING            (auth.uid() = user_id);
+CREATE POLICY "own_insert" ON public.health_profiles FOR INSERT  WITH CHECK        (auth.uid() = user_id);
+CREATE POLICY "own_update" ON public.health_profiles FOR UPDATE  USING             (auth.uid() = user_id);
+CREATE POLICY "own_delete" ON public.health_profiles FOR DELETE  USING             (auth.uid() = user_id);`}</pre>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={loadProfile}
+                          className="mt-3 text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+                        >
+                          Retry after running SQL ↻
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSetupBanner(null)}
+                      className="text-slate-500 hover:text-slate-300 transition-colors flex-shrink-0 p-1"
+                      aria-label="Dismiss"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* ── Save Status Banner ──────────────────────────────────────── */}
           <AnimatePresence>
