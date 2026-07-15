@@ -254,6 +254,8 @@ export default function MyHealthPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [loadState, setLoadState] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [loadErrorCode, setLoadErrorCode] = useState(null);
+  const [loadErrorMessage, setLoadErrorMessage] = useState('');
   const [saveState, setSaveState] = useState('idle');    // 'idle' | 'saving' | 'saved' | 'error'
   const [saveMsg, setSaveMsg] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -264,8 +266,12 @@ export default function MyHealthPage() {
   // ── Load profile on mount ─────────────────────────────────────────────────
   const loadProfile = useCallback(async () => {
     setLoadState('loading');
-    const { data, error } = await getHealthProfile();
+    setLoadErrorCode(null);
+    setLoadErrorMessage('');
+    const { data, error, errorCode } = await getHealthProfile();
     if (error) {
+      setLoadErrorCode(errorCode || 'UNKNOWN');
+      setLoadErrorMessage(error);
       setLoadState('error');
       return;
     }
@@ -274,8 +280,9 @@ export default function MyHealthPage() {
       setHasProfile(true);
       setIsEditing(false);
     } else {
+      // No profile yet — show create form immediately, never show an error
       setHasProfile(false);
-      setIsEditing(true); // New user — open form immediately
+      setIsEditing(true);
     }
     setLoadState('ready');
   }, []);
@@ -338,25 +345,116 @@ export default function MyHealthPage() {
   }
 
   if (loadState === 'error') {
+    // Build a specific, accurate message per error type
+    const errorDetails = {
+      NOT_CONFIGURED: {
+        icon: '🔧',
+        title: 'Supabase not configured',
+        body: 'Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your frontend .env file, then restart the dev server.',
+        showSql: false,
+        showLogin: false,
+      },
+      TABLE_NOT_FOUND: {
+        icon: '🗄️',
+        title: 'Database table missing',
+        body: 'The health_profiles table has not been created yet. Open your Supabase Dashboard → SQL Editor and run the schema below.',
+        showSql: true,
+        showLogin: false,
+      },
+      PERMISSION_DENIED: {
+        icon: '🔐',
+        title: 'Permission denied',
+        body: 'Row Level Security is blocking access. Please verify that the RLS policies were applied correctly in Supabase → Table Editor → health_profiles → Policies.',
+        showSql: false,
+        showLogin: false,
+      },
+      NOT_AUTHENTICATED: {
+        icon: '🔑',
+        title: 'Session expired',
+        body: 'Your session has expired. Please log out and log back in.',
+        showSql: false,
+        showLogin: true,
+      },
+      NETWORK_ERROR: {
+        icon: '📡',
+        title: 'Network error',
+        body: 'Could not reach Supabase. Please check your internet connection and try again.',
+        showSql: false,
+        showLogin: false,
+      },
+      UNKNOWN: {
+        icon: '⚠️',
+        title: 'Unexpected error',
+        body: loadErrorMessage || 'An unexpected error occurred while loading your health profile.',
+        showSql: false,
+        showLogin: false,
+      },
+    };
+
+    const detail = errorDetails[loadErrorCode] || errorDetails.UNKNOWN;
+
     return (
       <Layout>
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-          <div className="text-center space-y-4 max-w-sm">
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-8 h-8 text-rose-400" />
+          <div className="text-center space-y-5 max-w-lg">
+            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 flex items-center justify-center mx-auto text-3xl">
+              {detail.icon}
             </div>
-            <h2 className="text-lg font-bold text-white">Could not load profile</h2>
-            <p className="text-slate-400 text-sm">
-              Supabase may not be configured. Please add your{' '}
-              <code className="text-blue-400">VITE_SUPABASE_URL</code> and{' '}
-              <code className="text-blue-400">VITE_SUPABASE_ANON_KEY</code> to <code>.env</code>.
-            </p>
-            <button
-              onClick={loadProfile}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
-            >
-              Try Again
-            </button>
+            <div>
+              <h2 className="text-xl font-bold text-white mb-2">{detail.title}</h2>
+              <p className="text-slate-400 text-sm leading-relaxed">{detail.body}</p>
+            </div>
+
+            {detail.showSql && (
+              <div className="text-left bg-slate-900 border border-slate-700 rounded-xl p-4 text-xs text-slate-300 font-mono overflow-x-auto">
+                <p className="text-slate-500 mb-2 font-sans font-semibold text-xs uppercase tracking-wider">Run this in Supabase → SQL Editor:</p>
+                <pre className="whitespace-pre-wrap text-emerald-400 text-[11px] leading-relaxed">{`CREATE TABLE IF NOT EXISTS public.health_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  full_name TEXT, date_of_birth DATE,
+  gender TEXT, height_cm NUMERIC(5,1), weight_kg NUMERIC(5,1),
+  blood_group TEXT,
+  allergies TEXT[], chronic_diseases TEXT[],
+  current_medications TEXT[], past_surgeries TEXT[],
+  disabilities TEXT[], organ_donor BOOLEAN DEFAULT false,
+  emergency_contact_name TEXT,
+  emergency_contact_relationship TEXT,
+  emergency_contact_phone TEXT,
+  CONSTRAINT health_profiles_user_id_unique UNIQUE (user_id)
+);
+ALTER TABLE public.health_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_select" ON public.health_profiles FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "own_insert" ON public.health_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "own_update" ON public.health_profiles FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "own_delete" ON public.health_profiles FOR DELETE USING (auth.uid() = user_id);`}</pre>
+              </div>
+            )}
+
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={loadProfile}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Try Again
+              </button>
+              {detail.showLogin && (
+                <a
+                  href="/login"
+                  className="px-5 py-2.5 border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  Go to Login
+                </a>
+              )}
+            </div>
+
+            {loadErrorCode === 'UNKNOWN' && loadErrorMessage && (
+              <details className="text-left">
+                <summary className="text-xs text-slate-600 cursor-pointer hover:text-slate-400 transition-colors">Technical details</summary>
+                <code className="block mt-2 text-xs text-slate-500 bg-slate-900 rounded-lg p-3 break-all">{loadErrorMessage}</code>
+              </details>
+            )}
           </div>
         </div>
       </Layout>
