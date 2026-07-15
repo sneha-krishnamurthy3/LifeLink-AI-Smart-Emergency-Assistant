@@ -277,7 +277,7 @@ export default function EmergencyContactsPage() {
                 placeholder="Search contacts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-850/60 border border-slate-850 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all"
+                className="w-full bg-slate-800/60 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all"
               />
             </div>
 
@@ -295,7 +295,7 @@ export default function EmergencyContactsPage() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                     sortBy === item.field
                       ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                      : 'bg-slate-850 border-slate-800 text-slate-400 hover:text-white'
+                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -319,7 +319,7 @@ export default function EmergencyContactsPage() {
               custom={2}
               initial="hidden"
               animate="visible"
-              className="bg-slate-900/50 border border-slate-850 p-10 rounded-3xl text-center"
+              className="bg-slate-900/50 border border-slate-800 p-10 rounded-3xl text-center"
             >
               <AlertTriangle className="w-10 h-10 text-slate-600 mx-auto mb-3" />
               <h3 className="font-bold text-white text-base">No Contacts Found</h3>
@@ -387,14 +387,14 @@ export default function EmergencyContactsPage() {
                     <div className="flex gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleOpenEditModal(contact)}
-                        className="p-2 bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl border border-slate-800 transition-colors"
+                        className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-800 transition-colors"
                         title="Edit contact"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(contact.id)}
-                        className="p-2 bg-slate-850 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-xl border border-slate-800 hover:border-red-900/30 transition-colors"
+                        className="p-2 bg-slate-800 hover:bg-red-950/40 text-slate-400 hover:text-red-400 rounded-xl border border-slate-800 hover:border-red-900/30 transition-colors"
                         title="Delete contact"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -412,7 +412,7 @@ export default function EmergencyContactsPage() {
             custom={6}
             initial="hidden"
             animate="visible"
-            className="flex items-start gap-2.5 mt-8 px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-850 text-xs text-slate-500"
+            className="flex items-start gap-2.5 mt-8 px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-800 text-xs text-slate-500"
           >
             <Lock className="w-3.5 h-3.5 text-slate-600 flex-shrink-0 mt-0.5" />
             <span>
@@ -452,7 +452,7 @@ export default function EmergencyContactsPage() {
                 <button
                   type="button"
                   onClick={() => setShowFormModal(false)}
-                  className="p-1 rounded-lg hover:bg-slate-850 text-slate-400 hover:text-white transition-colors"
+                  className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -471,7 +471,7 @@ export default function EmergencyContactsPage() {
                       placeholder="e.g. Jane Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className={`w-full bg-slate-850/60 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
+                      className={`w-full bg-slate-800/80 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
                         formErrors.name ? 'border-red-500' : 'border-slate-800'
                       }`}
                     />
@@ -496,7 +496,7 @@ export default function EmergencyContactsPage() {
                       placeholder="e.g. +91 98765 43210"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className={`w-full bg-slate-850/60 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
+                      className={`w-full bg-slate-800/80 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
                         formErrors.phone ? 'border-red-500' : 'border-slate-800'
                       }`}
                     />
@@ -521,7 +521,7 @@ export default function EmergencyContactsPage() {
                       placeholder="e.g. jane@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className={`w-full bg-slate-850/60 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
+                      className={`w-full bg-slate-800/80 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
                         formErrors.email ? 'border-red-500' : 'border-slate-800'
                       }`}
                     />
@@ -545,7 +545,7 @@ export default function EmergencyContactsPage() {
                       <select
                         value={relationship}
                         onChange={(e) => setRelationship(e.target.value)}
-                        className="w-full bg-slate-850/60 border border-slate-880 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all appearance-none cursor-pointer"
+                        className="w-full bg-slate-800/80 border border-slate-750 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all appearance-none cursor-pointer"
                       >
                         {RELATIONSHIPS.map((r) => (
                           <option key={r} value={r} className="bg-slate-900">
@@ -567,7 +567,7 @@ export default function EmergencyContactsPage() {
                       placeholder="1"
                       value={priority}
                       onChange={(e) => setPriority(e.target.value)}
-                      className={`w-full bg-slate-850/60 border rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
+                      className={`w-full bg-slate-800/80 border rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-all ${
                         formErrors.priority ? 'border-red-500' : 'border-slate-800'
                       }`}
                     />
@@ -581,7 +581,7 @@ export default function EmergencyContactsPage() {
                 </div>
 
                 {/* Emergency Toggle */}
-                <div className="flex items-center gap-3 p-3 bg-slate-850/30 border border-slate-850 rounded-2xl mt-2">
+                <div className="flex items-center gap-3 p-3 bg-slate-800/30 border border-slate-800 rounded-2xl mt-2">
                   <input
                     type="checkbox"
                     id="is_emergency"
