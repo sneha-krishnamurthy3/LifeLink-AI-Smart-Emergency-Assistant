@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Public pages
 const Home               = lazy(() => import('@/pages/Home'));
@@ -13,7 +14,10 @@ const About              = lazy(() => import('@/pages/About'));
 
 // Auth pages — pull named exports from AuthPage module
 const LoginPage  = lazy(() => import('@/pages/AuthPage').then((m) => ({ default: m.LoginPage })));
-const SignupPage  = lazy(() => import('@/pages/AuthPage').then((m) => ({ default: m.SignupPage })));
+const SignupPage = lazy(() => import('@/pages/AuthPage').then((m) => ({ default: m.SignupPage })));
+
+// Authenticated pages
+const MyHealthPage = lazy(() => import('@/pages/MyHealthPage'));
 
 function App() {
   return (
@@ -31,9 +35,17 @@ function App() {
         {/* ── Authentication routes ──────────────────────────────────── */}
         <Route path="/login"  element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-
-        {/* Legacy /auth — backward compat with any existing links */}
         <Route path="/auth"   element={<LoginPage />} />
+
+        {/* ── Protected routes — require login ──────────────────────── */}
+        <Route
+          path="/my-health"
+          element={
+            <ProtectedRoute redirectTo="/login">
+              <MyHealthPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Suspense>
   );

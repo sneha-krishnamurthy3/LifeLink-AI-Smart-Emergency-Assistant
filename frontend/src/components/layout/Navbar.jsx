@@ -20,6 +20,7 @@ import {
   LogOut,
   User,
   ChevronDown,
+  Activity,
 } from 'lucide-react';
 
 const navLinks = [
@@ -81,6 +82,14 @@ function UserMenu({ user, onLogout }) {
               <p className="text-xs text-slate-400 font-medium">Signed in as</p>
               <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{email}</p>
             </div>
+            <Link
+              to="/my-health"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              <Activity className="w-4 h-4 text-blue-400" />
+              My Health Profile
+            </Link>
             <button
               onClick={() => { setOpen(false); onLogout(); }}
               className="w-full flex items-center gap-2.5 px-4 py-3 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors font-medium"
@@ -336,6 +345,13 @@ const Navbar = () => {
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
                         <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate mt-0.5">{user?.email}</p>
                       </div>
+                      <Link
+                        to="/my-health"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                      >
+                        <Activity className="w-5 h-5 text-blue-400" />
+                        My Health Profile
+                      </Link>
                       <button
                         onClick={() => { setIsOpen(false); logout(); }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all"
